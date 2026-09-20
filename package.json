@@ -12,7 +12,7 @@
     "diagnostico": "DIAG=1 node ler_grupo.cjs"
   },
   "keywords": [],
-  "author": "deiv",
+  "author": "ynxdeiv",
   "license": "MIT",
   "engines": {
     "node": ">=20"
