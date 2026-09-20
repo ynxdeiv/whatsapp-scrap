@@ -138,4 +138,6 @@ Decisões que valem registrar:
 
 ## Licença
 
-Sem licença definida — ou seja, todos os direitos reservados por padrão. Abra uma issue se quiser usar/distribuir.
+MIT — veja [LICENSE](LICENSE). Em resumo: pode usar, copiar, modificar e distribuir, inclusive comercialmente, mantendo o aviso de copyright; o software vem **sem garantia** de nenhum tipo.
+
+A licença vale para o **código** deste repositório. Ela não muda os termos do WhatsApp: automatizar o WhatsApp Web continua sendo uso de cliente não oficial, com o risco descrito no aviso lá em cima.
