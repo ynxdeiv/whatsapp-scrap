@@ -1,14 +1,4 @@
 #!/usr/bin/env node
-/**
- * gerar_xlsx.cjs — monta a planilha a partir do JSON gerado pelo ler_grupo.cjs.
- *
- * É offline: não abre navegador nem fala com o WhatsApp. Serve para reestilizar/refazer a
- * planilha quantas vezes quiser depois de uma única leitura.
- *
- * Uso:
- *   node gerar_xlsx.cjs                                  # usa ./saida/membros_ic.json
- *   JSON=~/outro.json XLSX=~/outra.xlsx node gerar_xlsx.cjs
- */
 const fs = require("fs");
 const config = require("./src/config.cjs");
 const { gerarXlsx } = require("./src/planilha.cjs");

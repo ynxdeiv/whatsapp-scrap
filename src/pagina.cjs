@@ -1,12 +1,3 @@
-/**
- * Código que roda DENTRO da página do WhatsApp Web.
- *
- * ATENÇÃO: a função passada para `page.evaluate` é serializada (toString) e executada no
- * navegador — ela NÃO enxerga nada deste arquivo. Todo helper precisa ser declarado dentro dela.
- *
- * `modo: "listar"`  -> lista grupos/comunidades
- * `modo: "extrair"` -> participantes + metadados do grupo
- */
 async function lerNaPagina(page, { modo, grupo }) {
   return page.evaluate(async (opcoes) => {
     const textoDeId = (valor) => {
@@ -21,7 +12,6 @@ async function lerNaPagina(page, { modo, grupo }) {
       }
     };
 
-    /** participants pode vir como array simples ou como coleção de modelos. */
     const listaDe = (colecao) => {
       if (!colecao) return null;
       if (Array.isArray(colecao)) return colecao;
@@ -37,7 +27,6 @@ async function lerNaPagina(page, { modo, grupo }) {
       return participantes ? participantes.length : 0;
     };
 
-    /** Normaliza nome para comparar: sem acento, minúsculo, só [a-z0-9 ] */
     const normalizar = (texto) =>
       (texto || "")
         .normalize("NFD")
@@ -54,7 +43,7 @@ async function lerNaPagina(page, { modo, grupo }) {
 
       let toPn = null;
       try {
-        toPn = window.require("WAWebLidMigrationUtils").toPn; // LID -> número
+        toPn = window.require("WAWebLidMigrationUtils").toPn;
       } catch (e) {}
       let getters = null;
       try {
@@ -78,7 +67,6 @@ async function lerNaPagina(page, { modo, grupo }) {
 
       if (opcoes.modo === "listar") return { ok: true, grupos: infos };
 
-      // ---- encontra o grupo: por id, nome exato, todas as palavras, ou trecho ----
       const alvo = normalizar(opcoes.grupo);
       const palavras = alvo.split(" ").filter(Boolean);
       const buscaPorId = (opcoes.grupo || "").includes("@");
@@ -97,7 +85,6 @@ async function lerNaPagina(page, { modo, grupo }) {
       }
       if (!chat) return { erro: "GRUPO", grupos: infos };
 
-      // atualiza o groupMetadata para vir com todos os participantes
       try {
         const metadados = colecao.GroupMetadata || colecao.WAWebGroupMetadataCollection;
         await metadados.update(fabricaWid.createWid(chat.id._serialized));
@@ -116,7 +103,6 @@ async function lerNaPagina(page, { modo, grupo }) {
         };
       }
 
-      /** Lê por getter oficial quando existe, caindo para a propriedade direta. */
       const pegar = (objeto, getter, propriedade) => {
         if (!objeto) return "";
         try {
@@ -133,7 +119,6 @@ async function lerNaPagina(page, { modo, grupo }) {
         }
       };
 
-      // ---- índice de contatos: nome da agenda, nome de perfil, business... ----
       let contatos = [];
       try {
         contatos = colecao.Contact && colecao.Contact.getModelsArray ? colecao.Contact.getModelsArray() : [];
@@ -153,10 +138,6 @@ async function lerNaPagina(page, { modo, grupo }) {
         }
       }
 
-      // ---- monta a lista de participantes ----
-      // A ordem importa: resolve o número PRIMEIRO e só depois olha se sobrou LID. Nesta versão
-      // do WhatsApp o id do participante costuma ser um @lid, então checar o id cru antes
-      // marcaria todo mundo como "sem número".
       const participantes = [];
       const amostraSemNome = [];
       let semNumero = 0;
@@ -195,7 +176,7 @@ async function lerNaPagina(page, { modo, grupo }) {
           contatoSalvo: contato
             ? !!(
                 pegar(contato, "getIsMyContact", "isMyContact") ||
-                contato.isAddressBookContact || // campo vivo nesta versão
+                contato.isAddressBookContact ||
                 contato.isSaved
               )
             : false,
@@ -211,7 +192,6 @@ async function lerNaPagina(page, { modo, grupo }) {
         };
         participantes.push(linha);
 
-        // guarda 3 exemplos de quem não tem nome em lugar nenhum, para diagnóstico
         const semNomeAlgum =
           !linha.nomeAgenda && !linha.notifyName && !linha.pushname && !linha.nomeParticipante;
         if (amostraSemNome.length < 3 && semNomeAlgum) {

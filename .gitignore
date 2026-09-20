@@ -16,3 +16,6 @@ membros_ic.*
 .DS_Store
 *.log
 npm-debug.log*
+
+# Configuração local (não versionar)
+.env

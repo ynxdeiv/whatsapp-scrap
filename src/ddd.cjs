@@ -1,9 +1,3 @@
-/**
- * Tabelas de DDD/DDI e a decomposição de um número em { ddi, pais, ddd, uf }.
- *
- * A tabela DDD -> UF é fixa e serve para dar contexto geográfico ao número. Com portabilidade
- * numérica o DDD indica a região onde o número foi emitido, não onde a pessoa está hoje.
- */
 const DDD_UF = {
   11: "SP", 12: "SP", 13: "SP", 14: "SP", 15: "SP", 16: "SP", 17: "SP", 18: "SP", 19: "SP",
   21: "RJ", 22: "RJ", 24: "RJ",
@@ -49,22 +43,20 @@ const DDI_PAIS = {
   595: "Paraguai", 598: "Uruguai",
 };
 
-/** Número no formato internacional sem símbolos -> { ddi, pais, ddd, uf }. */
 function decomporNumero(numero) {
   const digitos = String(numero || "").replace(/\D/g, "");
   if (!digitos) return { ddi: "", pais: "", ddd: "", uf: "" };
 
-  // Brasil: 55 + DDD(2) + 8 ou 9 dígitos = 12 ou 13 dígitos no total
   if (digitos.startsWith("55") && (digitos.length === 12 || digitos.length === 13)) {
     const ddd = digitos.slice(2, 4);
     return { ddi: "55", pais: "Brasil", ddd, uf: DDD_UF[Number(ddd)] || "(?)" };
   }
 
-  // fora do Brasil: tenta DDI de 3, 2 e 1 dígito, nessa ordem
   for (const tamanho of [3, 2, 1]) {
     const ddi = digitos.slice(0, tamanho);
     if (DDI_PAIS[Number(ddi)]) return { ddi, pais: DDI_PAIS[Number(ddi)], ddd: "", uf: "" };
   }
+
   return { ddi: digitos.slice(0, 3), pais: "(?)", ddd: "", uf: "" };
 }
 

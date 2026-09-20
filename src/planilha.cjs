@@ -1,7 +1,3 @@
-/**
- * Gera a planilha estilizada (exceljs) a partir do JSON de saída.
- * Três abas: Participantes, Resumo e Por DDD-UF.
- */
 const { decomporNumero } = require("./ddd.cjs");
 const { montarResumo } = require("./resumo.cjs");
 
@@ -28,20 +24,21 @@ const COLUNAS_PARTICIPANTES = [
   { header: "LID", key: "lid", largura: 18 },
 ];
 
-function estilizarCabecalho(aba, colunas) {
+function colunaFinal(aba) {
+  return String.fromCharCode("A".charCodeAt(0) + aba.columns.length - 1);
+}
+
+function estilizarCabecalho(aba, larguras) {
   const cabecalho = aba.getRow(1);
   cabecalho.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
   cabecalho.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COR_CABECALHO } };
   cabecalho.alignment = { vertical: "middle" };
   cabecalho.height = 24;
+
   aba.columns.forEach((coluna, indice) => {
-    coluna.width = colunas[indice].largura;
+    coluna.width = larguras[indice];
   });
   aba.autoFilter = { from: "A1", to: `${colunaFinal(aba)}1` };
-}
-
-function colunaFinal(aba) {
-  return String.fromCharCode("A".charCodeAt(0) + aba.columns.length - 1);
 }
 
 function pintarZebra(linha) {
@@ -50,7 +47,6 @@ function pintarZebra(linha) {
   });
 }
 
-/** Números válidos vêm primeiro, em ordem numérica; quem não tem número vai para o fim. */
 function ordenarPorNumero(participantes) {
   return [...participantes].sort((a, b) => {
     const valorA = a.numero ? Number(a.numero) : Number.POSITIVE_INFINITY;
@@ -62,7 +58,7 @@ function ordenarPorNumero(participantes) {
 function montarAbaParticipantes(wb, linhas) {
   const aba = wb.addWorksheet("Participantes", { views: [{ state: "frozen", ySplit: 1 }] });
   aba.columns = COLUNAS_PARTICIPANTES.map(({ header, key }) => ({ header, key }));
-  estilizarCabecalho(aba, COLUNAS_PARTICIPANTES);
+  estilizarCabecalho(aba, COLUNAS_PARTICIPANTES.map((coluna) => coluna.largura));
 
   ordenarPorNumero(linhas).forEach((p, indice) => {
     const linha = aba.addRow({
@@ -89,6 +85,7 @@ function montarAbaParticipantes(wb, linhas) {
     if (p.papel === "admin") linha.getCell("papel").font = { bold: true, color: { argb: "FFB26B00" } };
     if (p.papel === "superadmin") linha.getCell("papel").font = { bold: true, color: { argb: "FFB00020" } };
   });
+
   return aba;
 }
 
@@ -96,7 +93,7 @@ function montarAbaResumo(wb, dados, contagens, estados, ddds) {
   const grupo = dados.grupo || {};
   const sim = (valor) => (valor ? "sim" : "não");
 
-  const linhas = [
+  const itens = [
     ["Grupo", grupo.nome || ""],
     ["JID", grupo.jid || ""],
     ["É comunidade/subgrupo", sim(grupo.comunidade)],
@@ -129,15 +126,16 @@ function montarAbaResumo(wb, dados, contagens, estados, ddds) {
 
   const aba = wb.addWorksheet("Resumo", { views: [{ state: "frozen", ySplit: 1 }] });
   aba.columns = [
-    { header: "Item", key: "item", width: 38 },
-    { header: "Valor", key: "valor", width: 46 },
+    { header: "Item", key: "item" },
+    { header: "Valor", key: "valor" },
   ];
-  estilizarCabecalho(aba, [{ largura: 38 }, { largura: 46 }]);
+  estilizarCabecalho(aba, [38, 46]);
 
-  for (const [item, valor] of linhas) {
+  for (const [item, valor] of itens) {
     const linha = aba.addRow({ item, valor });
     if (item) linha.getCell("item").font = { bold: true };
   }
+
   return aba;
 }
 
@@ -150,21 +148,23 @@ function montarAbaPorDdd(wb, linhas) {
 
   const aba = wb.addWorksheet("Por DDD-UF", { views: [{ state: "frozen", ySplit: 1 }] });
   aba.columns = [
-    { header: "DDD", key: "ddd", width: 10 },
-    { header: "UF", key: "uf", width: 10 },
-    { header: "Participantes", key: "quantidade", width: 16 },
-    { header: "% do grupo", key: "porcentagem", width: 14 },
+    { header: "DDD", key: "ddd" },
+    { header: "UF", key: "uf" },
+    { header: "Participantes", key: "quantidade" },
+    { header: "% do grupo", key: "porcentagem" },
   ];
-  estilizarCabecalho(aba, [{ largura: 10 }, { largura: 10 }, { largura: 16 }, { largura: 14 }]);
+  estilizarCabecalho(aba, [10, 10, 16, 14]);
 
   const total = linhas.length || 1;
-  const ordenado = [...contagem.entries()].sort((a, b) => b[1] - a[1]);
-  ordenado.forEach(([chave, quantidade], indice) => {
-    const [ddd, uf] = chave.split("|");
-    const linha = aba.addRow({ ddd, uf, quantidade, porcentagem: quantidade / total });
-    linha.getCell("porcentagem").numFmt = "0.0%";
-    if (indice % 2 === 1) pintarZebra(linha);
-  });
+  [...contagem.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([chave, quantidade], indice) => {
+      const [ddd, uf] = chave.split("|");
+      const linha = aba.addRow({ ddd, uf, quantidade, porcentagem: quantidade / total });
+      linha.getCell("porcentagem").numFmt = "0.0%";
+      if (indice % 2 === 1) pintarZebra(linha);
+    });
+
   return aba;
 }
 

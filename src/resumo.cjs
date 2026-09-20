@@ -1,6 +1,3 @@
-/**
- * Contagens usadas no console e na aba "Resumo" da planilha (fonte única, sem duplicar regra).
- */
 function montarResumo(dados) {
   const participantes = dados.participantes || [];
   const contar = (filtro) => participantes.filter(filtro).length;

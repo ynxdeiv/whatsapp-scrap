@@ -1,17 +1,9 @@
-/**
- * Tudo que fala com o Chrome: abrir, detectar QR/login, esperar o sync das conversas.
- * Nada aqui conhece regra de negócio (grupo, planilha, CSV).
- */
 const puppeteer = require("puppeteer");
 const qrcode = require("qrcode-terminal");
 const config = require("./config.cjs");
 
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * O WhatsApp Web recusa o Chrome em headless ("atualize o Chrome") porque a UA vem com
- * "HeadlessChrome". Trocamos por "Chrome" (o resto da UA é a real do binário).
- */
 const normalizarUA = (ua) => ua.replace("HeadlessChrome", "Chrome");
 
 async function abrirNavegador() {
@@ -33,10 +25,6 @@ async function abrirNavegador() {
   return { browser, page };
 }
 
-/**
- * Estado atual da página. Tolera "Execution context was destroyed", que acontece quando o
- * próprio WhatsApp Web recarrega a página no meio de um evaluate.
- */
 async function estadoDaPagina(page) {
   try {
     return await page.evaluate(() => {
@@ -72,7 +60,6 @@ function imprimirQR(ref) {
   console.log("=== fim do QR — ele se renova sozinho aqui se expirar ===\n");
 }
 
-/** Espera ficar logado, imprimindo cada QR novo que aparecer. */
 async function esperarLogin(page) {
   let ultimoQR = null;
   const inicio = Date.now();
@@ -90,10 +77,10 @@ async function esperarLogin(page) {
       return { logado: true, versao: estado.versao, conversas: estado.conversas };
     }
   }
+
   return { logado: false, motivo: "tempo esgotado esperando login" };
 }
 
-/** O sync das conversas é progressivo: espera a contagem parar de crescer. */
 async function esperarSincronizacao(page) {
   let anterior = -1;
   let estaveis = 0;
@@ -109,6 +96,7 @@ async function esperarSincronizacao(page) {
     console.log(`  ... ${estado.conversas} conversas`);
     if (estaveis >= 3 && estado.conversas > 0) break;
   }
+
   return anterior;
 }
 

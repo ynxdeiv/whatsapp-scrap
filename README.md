@@ -16,7 +16,43 @@ Extrai os participantes de um grupo do WhatsApp Web — número, LID, nome da ag
 ```bash
 npm install
 npx puppeteer browsers install chrome
+cp .env.example .env
 ```
+
+## Configuração (`.env`)
+
+Tudo que é configurável vem de variáveis de ambiente, com os valores padrão do `.env`:
+
+```bash
+cp .env.example .env     # e edite à vontade
+```
+
+O `.env` é lido automaticamente pelo `src/config.cjs` (via `dotenv`), então funciona tanto em `node ler_grupo.cjs` quanto em `npm run iniciar`. Duas regras de precedência:
+
+1. **Variável de ambiente na linha de comando ganha do `.env`** — útil para testes pontuais: `GRUPO="Outro Grupo" node ler_grupo.cjs`.
+2. **`.env` ganha do padrão do código** — o único lugar com valores default é o `src/config.cjs`.
+
+O `.env` está no `.gitignore` (só o `.env.example` é versionado).
+
+O exemplo mais importante é o `GRUPO`, que aceita:
+
+- **nome aproximado** — `Meu Grupo`, `meu grupo` ou `Grupo Meu` funcionam (ignora acento, maiúsculas e ordem das palavras), o que ajuda quando o grupo é subgrupo de comunidade e o nome aparece como `Meu - Grupo`, `Meu Grupo ⚽` etc.;
+- **id** — `120363xxxxxxxxxxxxxx@g.us` (pegue com `LISTAR=1`).
+
+### Variáveis de ambiente
+
+| Variável | Padrão | Para que serve |
+|---|---|---|
+| `GRUPO` | `Meu Grupo` | Nome aproximado ou id `1234@g.us` do grupo |
+| `LISTAR=1` | — | Só lista os grupos/comunidades e sai (útil quando o nome não casa) |
+| `HEADLESS=0` | headless | Abre uma janela real do Chrome — dá para escanear o QR na própria tela |
+| `CHROME_ARGS` | — | Flags extras ao Chrome, ex. `CHROME_ARGS="--no-sandbox --disable-gpu"` (necessário dentro de sandbox/container) |
+| `DIAG=1` | — | Imprime diagnóstico da leitura (formatos, contagem de nomes, exemplos) |
+| `SEM_XLSX=1` | — | Gera só JSON e CSV |
+| `SAIDA` | `./saida` | Pasta de saída |
+| `JSON` / `CSV` / `XLSX` | dentro de `SAIDA` | Caminho individual de cada arquivo |
+
+Caminhos relativos (`SAIDA`, `JSON`, `CSV`, `XLSX`) são resolvidos a partir da raiz do projeto, então dá para rodar o script de qualquer diretório.
 
 ## Uso
 
@@ -39,19 +75,6 @@ Para refazer a planilha **sem reler o WhatsApp** (é o fluxo recomendado: leia u
 ```bash
 node gerar_xlsx.cjs         # ou: npm run planilha
 ```
-
-### Variáveis de ambiente
-
-| Variável | Padrão | Para que serve |
-|---|---|---|
-| `GRUPO` | `Meu Grupo` | Nome aproximado (ignora acento/maiúsculas/ordem das palavras) ou id `1234@g.us` |
-| `LISTAR=1` | — | Só lista os grupos/comunidades e sai (útil quando o nome não casa) |
-| `HEADLESS=0` | headless | Abre uma janela real do Chrome — dá para escanear o QR na própria tela |
-| `CHROME_ARGS` | — | Flags extras ao Chrome, ex. `CHROME_ARGS="--no-sandbox --disable-gpu"` (necessário dentro de sandbox/container) |
-| `DIAG=1` | — | Imprime diagnóstico da leitura (formatos, contagem de nomes, exemplos) |
-| `SEM_XLSX=1` | — | Gera só JSON e CSV |
-| `SAIDA` | `./saida` | Pasta de saída |
-| `JSON` / `CSV` / `XLSX` | dentro de `SAIDA` | Caminho individual de cada arquivo |
 
 ### Códigos de saída
 
@@ -82,7 +105,7 @@ Os códigos `5` e `7` existem por um motivo específico: nunca sobrescrever uma 
 ```
 ler_grupo.cjs          # entrada: orquestra tudo, decide códigos de saída
 gerar_xlsx.cjs         # entrada: só monta a planilha a partir do JSON
-src/config.cjs         # env vars, caminhos, tempos (único lugar que lê process.env)
+src/config.cjs         # env vars (carrega o .env), caminhos, tempos
 src/navegador.cjs      # puppeteer: abrir Chrome, detectar QR/login, esperar o sync
 src/pagina.cjs         # código que roda DENTRO da página (extração + listagem)
 src/resumo.cjs         # contagens (fonte única para console e planilha)
