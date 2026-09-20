@@ -37,7 +37,7 @@ O `.env` está no `.gitignore` (só o `.env.example` é versionado).
 O exemplo mais importante é o `GRUPO`, que aceita:
 
 - **nome aproximado** — `Meu Grupo`, `meu grupo` ou `Grupo Meu` funcionam (ignora acento, maiúsculas e ordem das palavras), o que ajuda quando o grupo é subgrupo de comunidade e o nome aparece como `Meu - Grupo`, `Meu Grupo ⚽` etc.;
-- **id** — `120363xxxxxxxxxxxxxx@g.us` (pegue com `LISTAR=1`).
+- **id** — `120363xxxxxxxxxxxxxx@g.us` (rode com `LISTAR=1` para ver os seus).
 
 ### Variáveis de ambiente
 
@@ -138,4 +138,4 @@ Decisões que valem registrar:
 
 ## Licença
 
-Sem licença definida — repositório privado, uso pessoal.
+Sem licença definida — ou seja, todos os direitos reservados por padrão. Abra uma issue se quiser usar/distribuir.
