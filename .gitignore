@@ -1,0 +1,18 @@
+# Dependências
+node_modules/
+
+# Sessão do WhatsApp Web — CONTÉM CREDENCIAIS DA SUA CONTA
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Saída gerada — CONTÉM DADOS PESSOAIS DE TERCEIROS (números de telefone)
+saida/
+membros_ic.*
+
+# Estado do agente Reasonix
+.reasonix/
+
+# Sistema / logs
+.DS_Store
+*.log
+npm-debug.log*

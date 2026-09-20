@@ -1,0 +1,25 @@
+{
+  "name": "whatsapp-scrap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Extrai participantes de um grupo do WhatsApp Web (números, nomes, papel, DDD/UF) para JSON, CSV e XLSX",
+  "main": "ler_grupo.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "iniciar": "node ler_grupo.cjs",
+    "planilha": "node gerar_xlsx.cjs",
+    "listar": "LISTAR=1 node ler_grupo.cjs",
+    "diagnostico": "DIAG=1 node ler_grupo.cjs"
+  },
+  "keywords": [],
+  "author": "deiv",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "puppeteer": "^24.38.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
