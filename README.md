@@ -136,6 +136,12 @@ Decisões que valem registrar:
 - `Could not find Chrome` — falta instalar o navegador do puppeteer: `npx puppeteer browsers install chrome`.
 - **No celular**: "não é possível conectar dispositivos no momento" — bloqueio temporário do lado do WhatsApp. Espere antes de tentar de novo; QR expirado também dá essa mensagem, e o script imprime o QR novo sozinho.
 
+## O que dá para fazer com a saída
+
+A pasta `saida/` serve de entrada para outras ferramentas — por exemplo:
+
+- [adm-sorteio-amostra](https://github.com/ynxdeiv/adm-sorteio-amostra) — sorteia uma amostra dos participantes (o id é a posição no arquivo, mais papel e contato salvo), com trilha de auditoria por seed e hashes, para quem precisa justificar o sorteio.
+
 ## Licença
 
 MIT — veja [LICENSE](LICENSE). Em resumo: pode usar, copiar, modificar e distribuir, inclusive comercialmente, mantendo o aviso de copyright; o software vem **sem garantia** de nenhum tipo.
