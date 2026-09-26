@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>whatsapp-scrap — grupos</title>
+    <link rel="stylesheet" href="/estilo.css" />
+  </head>
+  <body>
+    <header class="topo">
+      <div class="marca">
+        <span class="logo" aria-hidden="true"></span>
+        <strong>whatsapp-scrap</strong>
+        <span class="tag">local</span>
+      </div>
+      <div class="topo-acoes">
+        <span id="pilula" class="pilula">desconectado</span>
+        <button id="btn-conectar" class="botao primario">Conectar</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="painel-erro" class="cartao erro oculto">
+        <h2>Não deu</h2>
+        <p id="erro-texto" class="muted"></p>
+      </section>
+
+      <section id="painel-conexao" class="cartao">
+        <h1 id="conexao-titulo">Conectar</h1>
+        <p id="conexao-dica" class="muted pequeno">
+          Clique em <strong>Conectar</strong> para abrir o WhatsApp Web no Chrome.
+        </p>
+        <div id="qr-caixa" class="qr-caixa oculto"></div>
+        <p id="qr-dica" class="muted pequeno oculto">
+          WhatsApp → <strong>Dispositivos conectados</strong> → <strong>Conectar dispositivo</strong>. O QR se
+          renova sozinho; a sessão fica salva em <code>.wwebjs_auth/</code> e a próxima vez não pede QR.
+        </p>
+      </section>
+
+      <section id="painel-sync" class="cartao oculto">
+        <h1>Sincronizando</h1>
+        <p id="sync-texto" class="muted pequeno">carregando conversas…</p>
+      </section>
+
+      <section id="painel-grupos" class="cartao oculto">
+        <div class="cabecalho-lista">
+          <div>
+            <h1>Seus grupos</h1>
+            <p id="grupos-info" class="muted pequeno"></p>
+          </div>
+          <div class="acoes">
+            <input id="busca" type="search" placeholder="filtrar por nome…" autocomplete="off" />
+            <button id="btn-atualizar" class="botao" title="Relê os grupos (útil se o celular ainda estava sincronizando)">Atualizar lista</button>
+            <button id="btn-marcar" class="botao">Marcar visíveis</button>
+            <button id="btn-limpar" class="botao">Limpar</button>
+            <button id="btn-extrair" class="botao primario" disabled>Extrair 0 grupos</button>
+          </div>
+        </div>
+        <div id="lista-grupos" class="lista"></div>
+      </section>
+
+      <section id="painel-progresso" class="cartao oculto">
+        <h2 id="progresso-titulo">Extraindo…</h2>
+        <div class="barra"><div id="barra-preenche" class="barra-preenche"></div></div>
+        <p id="progresso-texto" class="muted pequeno"></p>
+        <ul id="progresso-erros" class="erros"></ul>
+      </section>
+
+      <section id="painel-resultados" class="cartao oculto">
+        <div class="cabecalho-lista">
+          <div>
+            <h1>Extrações salvas neste computador</h1>
+            <p id="aviso-offline" class="aviso-offline pequeno oculto">
+              Você está desconectado. Estes grupos foram extraídos antes e ficaram salvos aqui — dá para exportar e
+              apagar sem conectar. Para extrair de novo ou outros grupos, clique em Conectar.
+            </p>
+            <p class="muted pequeno">
+              arquivos em <code>saida/grupos/</code> — o <b>CSV</b> de cada grupo é só os números (formato do
+              <code>ler_grupo.cjs</code>); o <b>completo</b> é um CSV com todas as colunas
+            </p>
+          </div>
+          <div class="acoes">
+            <a id="baixar-consolidado" class="botao" href="/api/download?formato=todos">
+              CSV consolidado
+            </a>
+            <a class="botao" href="/api/pdf" download title="Relatório em PDF com todos os grupos">PDF de todos</a>
+            <button id="btn-baixar" class="botao primario">Baixar todos os arquivos</button>
+          </div>
+        </div>
+        <div class="tabela-rolagem">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th class="num">Participantes</th>
+                <th class="num">Com nome</th>
+                <th class="num">Admins</th>
+                <th class="num">Sem número</th>
+                <th>Arquivos</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-resultados"></tbody>
+          </table>
+        </div>
+
+        <div class="exportar">
+          <h2>Exportar sob medida</h2>
+          <p class="muted pequeno">escolha o grupo, as colunas e os filtros — o arquivo é montado na hora a partir dos dados já extraídos</p>
+
+          <div class="exportar-grade">
+            <fieldset>
+              <legend>Grupo</legend>
+              <select id="exp-grupo"></select>
+            </fieldset>
+
+            <fieldset>
+              <legend>Papel</legend>
+              <div id="exp-papeis" class="opcoes"></div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Região</legend>
+              <label class="campo">UF <input id="exp-ufs" type="text" placeholder="ex.: BA, SP (vazio = todas)" /></label>
+              <label class="campo">DDD <input id="exp-ddds" type="text" placeholder="ex.: 71, 11 (vazio = todos)" /></label>
+            </fieldset>
+
+            <fieldset>
+              <legend>Somente</legend>
+              <div class="opcoes">
+                <label><input type="checkbox" id="exp-comNumero" /> com número</label>
+                <label><input type="checkbox" id="exp-comNome" /> com nome</label>
+                <label><input type="checkbox" id="exp-salvos" /> contatos salvos</label>
+                <label><input type="checkbox" id="exp-unicos" /> sem repetir número</label>
+              </div>
+            </fieldset>
+
+            <fieldset class="largo">
+              <legend>
+                Colunas
+                <button id="exp-todas" type="button" class="link">todas</button>
+                <button id="exp-nenhuma" type="button" class="link">nenhuma</button>
+              </legend>
+              <div id="exp-colunas" class="opcoes"></div>
+            </fieldset>
+          </div>
+
+          <div class="exportar-rodape">
+            <label class="campo">
+              Separador
+              <select id="exp-sep">
+                <option value=";">ponto e vírgula (Excel em português)</option>
+                <option value=",">vírgula</option>
+              </select>
+            </label>
+            <div class="opcoes">
+              <label><input type="checkbox" id="exp-mascarar" /> mascarar números (ex.: +55 71 9****-2516)</label>
+              <label><input type="checkbox" id="exp-participantes" /> incluir lista de participantes no PDF</label>
+            </div>
+            <span id="exp-contagem" class="muted pequeno"></span>
+            <div class="acoes">
+              <a id="exp-pdf" class="botao" href="#" download title="Resumo, UFs e admins; a lista de participantes só se marcada">Baixar PDF</a>
+              <a id="exp-baixar" class="botao primario" href="#" download>Baixar CSV</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="rodape">
+      <p>
+        Cliente não oficial: automatizar o WhatsApp Web viola os termos do WhatsApp e existe risco real de
+        bloqueio da conta. A saída tem número de telefone de terceiros — trate como dado pessoal. Tudo roda na
+        sua máquina; nada sai daqui.
+      </p>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
