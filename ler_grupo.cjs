@@ -2,7 +2,7 @@
 const config = require("./src/config.cjs");
 const navegador = require("./src/navegador.cjs");
 const { lerNaPagina } = require("./src/pagina.cjs");
-const { montarResumo } = require("./src/resumo.cjs");
+const { montarResumo, problemaNaLeitura } = require("./src/resumo.cjs");
 const saida = require("./src/saida.cjs");
 
 const TENTATIVAS_GRUPO = 3;
@@ -29,12 +29,6 @@ async function lerGrupo(page, nome) {
   }
 
   return resultado;
-}
-
-function problemaNaLeitura(grupo) {
-  if (!grupo.totalParticipantes) return "li o grupo mas vieram 0 participantes (o groupMetadata não atualizou)";
-  if (grupo.semNumero === grupo.totalParticipantes) return "todos os participantes vieram sem número";
-  return null;
 }
 
 function imprimirResultado(grupo, contagens, numeros) {

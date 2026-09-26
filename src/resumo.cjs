@@ -23,4 +23,10 @@ function montarResumo(dados) {
   };
 }
 
-module.exports = { montarResumo };
+function problemaNaLeitura(grupo) {
+  if (!grupo.totalParticipantes) return "vieram 0 participantes — você ainda está nesse grupo? (se estiver, tente de novo em instantes)";
+  if (grupo.semNumero === grupo.totalParticipantes) return "todos os participantes vieram sem número";
+  return null;
+}
+
+module.exports = { montarResumo, problemaNaLeitura };

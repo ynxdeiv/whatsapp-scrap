@@ -22,9 +22,68 @@ async function lerNaPagina(page, { modo, grupo }) {
       return null;
     };
 
+    let chatGetters = null;
+    try {
+      chatGetters = window.require("WAWebChatGetters");
+    } catch (e) {}
+    let frontGetters = null;
+    try {
+      frontGetters = window.require("WAWebFrontendChatGetters");
+    } catch (e) {}
+
+    const chamar = (modulo, funcao, chat) => {
+      try {
+        return modulo && typeof modulo[funcao] === "function" ? modulo[funcao](chat) : undefined;
+      } catch (e) {
+        return undefined;
+      }
+    };
+
+    const ler = (objeto, propriedade) => {
+      try {
+        return objeto ? objeto[propriedade] : undefined;
+      } catch (e) {
+        return undefined;
+      }
+    };
+
+    let colecaoMetadados = null;
+
+    const metadadosDe = (chat) => {
+      const direto = ler(chat, "groupMetadata") || chamar(frontGetters, "getGroupMetadata", chat);
+      if (direto) return direto;
+      try {
+        return (colecaoMetadados && colecaoMetadados.get(chat.id)) || null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const nomeDe = (chat) =>
+      ler(chat, "name") ||
+      chamar(chatGetters, "getName", chat) ||
+      ler(chat, "formattedTitle") ||
+      chamar(frontGetters, "getFormattedTitle", chat) ||
+      ler(metadadosDe(chat), "subject") ||
+      "";
+
     const contarParticipantes = (chat) => {
-      const participantes = listaDe(chat.groupMetadata && chat.groupMetadata.participants);
+      const participantes = listaDe(ler(metadadosDe(chat), "participants"));
       return participantes ? participantes.length : 0;
+    };
+
+    const comLimite = async (pedido, ms) => {
+      try {
+        await Promise.race([pedido, new Promise((resolve) => setTimeout(resolve, ms))]);
+      } catch (e) {}
+    };
+
+    const buscarMetadados = async (chat, atualizar) => {
+      if (!colecaoMetadados) return;
+      try {
+        const usarUpdate = atualizar || typeof colecaoMetadados.find !== "function";
+        await comLimite(usarUpdate ? colecaoMetadados.update(chat.id) : colecaoMetadados.find(chat.id), 8000);
+      } catch (e) {}
     };
 
     const normalizar = (texto) =>
@@ -39,7 +98,7 @@ async function lerNaPagina(page, { modo, grupo }) {
 
     try {
       const colecao = window.require("WAWebCollections");
-      const fabricaWid = window.require("WAWebWidFactory");
+      colecaoMetadados = colecao.GroupMetadata || colecao.WAWebGroupMetadataCollection || null;
 
       let toPn = null;
       try {
@@ -58,8 +117,15 @@ async function lerNaPagina(page, { modo, grupo }) {
         (chat) => chat.isGroup || chat.isCommunity || idDe(chat).endsWith("@g.us")
       );
 
+      if (opcoes.modo === "listar") {
+        const incompletos = grupos.filter((chat) => !nomeDe(chat) || contarParticipantes(chat) === 0);
+        for (let i = 0; i < incompletos.length; i += 5) {
+          await Promise.all(incompletos.slice(i, i + 5).map(buscarMetadados));
+        }
+      }
+
       const infos = grupos.map((chat) => ({
-        nome: chat.name || chat.formattedTitle || "(sem nome)",
+        nome: nomeDe(chat) || "(sem nome)",
         id: idDe(chat),
         comunidade: !!chat.isCommunity,
         participantes: contarParticipantes(chat),
@@ -71,31 +137,28 @@ async function lerNaPagina(page, { modo, grupo }) {
       const palavras = alvo.split(" ").filter(Boolean);
       const buscaPorId = (opcoes.grupo || "").includes("@");
 
+      if (!alvo) return { erro: "GRUPO", grupos: infos };
+
       let chat = null;
-      if (buscaPorId) chat = grupos.find((c) => idDe(c).startsWith(opcoes.grupo.split("@")[0]));
-      if (!chat) chat = grupos.find((c) => normalizar(c.name) === alvo || normalizar(c.formattedTitle) === alvo);
+      if (buscaPorId) chat = grupos.find((c) => idDe(c) === opcoes.grupo);
+      if (!chat) chat = grupos.find((c) => normalizar(nomeDe(c)) === alvo);
       if (!chat) {
         chat = grupos.find((c) => {
-          const nome = normalizar(c.name) + " " + normalizar(c.formattedTitle);
+          const nome = normalizar(nomeDe(c));
           return palavras.length > 0 && palavras.every((palavra) => nome.includes(palavra));
         });
       }
-      if (!chat) {
-        chat = grupos.find((c) => normalizar(c.name).includes(alvo) || normalizar(c.formattedTitle).includes(alvo));
-      }
+      if (!chat) chat = grupos.find((c) => normalizar(nomeDe(c)).includes(alvo));
       if (!chat) return { erro: "GRUPO", grupos: infos };
 
-      try {
-        const metadados = colecao.GroupMetadata || colecao.WAWebGroupMetadataCollection;
-        await metadados.update(fabricaWid.createWid(chat.id._serialized));
-      } catch (e) {}
+      await buscarMetadados(chat, true);
 
-      const gm = chat.groupMetadata || {};
+      const gm = metadadosDe(chat) || {};
       const participantesRaw = listaDe(gm.participants);
       if (!participantesRaw) {
         return {
           erro: "FORMATO",
-          nome: chat.name || chat.formattedTitle,
+          nome: nomeDe(chat),
           detalhe: {
             tipo: Object.prototype.toString.call(gm.participants),
             chaves: gm.participants ? Object.keys(gm.participants).slice(0, 25) : null,
@@ -213,7 +276,7 @@ async function lerNaPagina(page, { modo, grupo }) {
       return {
         ok: true,
         grupo: {
-          nome: chat.name || chat.formattedTitle,
+          nome: nomeDe(chat),
           jid: idDe(chat),
           comunidade: !!chat.isCommunity,
           criador: gm.owner ? textoDeId(gm.owner) : "",
